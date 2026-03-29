@@ -41,6 +41,12 @@ func NewSesMailService(ctx context.Context, logger *slog.Logger, client sesAPI, 
 	}
 }
 
+func (s *SesMailService) AlertRecipients() []string {
+	out := make([]string, len(s.to))
+	copy(out, s.to)
+	return out
+}
+
 func (s *SesMailService) Send(ctx context.Context, subject, body string) error {
 	input := &ses.SendEmailInput{
 		Source: aws.String(s.from),
@@ -61,9 +67,10 @@ func (s *SesMailService) Send(ctx context.Context, subject, body string) error {
 		},
 	}
 
-	_, err := s.client.SendEmail(ctx, input)
+	res, err := s.client.SendEmail(ctx, input)
 	if err != nil {
 		return fmt.Errorf("sending email via SES: %w", err)
 	}
+	s.logger.Debug("email processed by SES", "response", res)
 	return nil
 }

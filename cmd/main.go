@@ -20,8 +20,17 @@ import (
 )
 
 func main() {
+	var logLevel slog.LevelVar
+	logLevel.Set(slog.LevelInfo)
+	if s := os.Getenv("LOG_LEVEL"); s != "" {
+		var lvl slog.Level
+		if err := lvl.UnmarshalText([]byte(s)); err == nil {
+			logLevel.Set(lvl)
+		}
+	}
+
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level:     slog.LevelInfo,
+		Level:     &logLevel,
 		AddSource: false,
 	}))
 

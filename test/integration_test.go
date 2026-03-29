@@ -51,6 +51,10 @@ func (r *recordingMailService) Send(_ context.Context, subject, body string) err
 	return nil
 }
 
+func (r *recordingMailService) AlertRecipients() []string {
+	return []string{r.to}
+}
+
 func (r *recordingMailService) CallCount() int {
 	return int(r.calls.Load())
 }

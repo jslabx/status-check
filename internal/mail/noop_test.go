@@ -8,6 +8,13 @@ import (
 	"status-check/internal/testutil"
 )
 
+func TestNoopMailService_AlertRecipients(t *testing.T) {
+	svc := NewNoopMailService(testDiscardLogger())
+	if svc.AlertRecipients() != nil {
+		t.Errorf("AlertRecipients: got %v, want nil", svc.AlertRecipients())
+	}
+}
+
 func TestNoopMailService_Send_LogsSuppressedAlert(t *testing.T) {
 	logger, cap := testutil.NewCaptureLogger()
 	svc := NewNoopMailService(logger)

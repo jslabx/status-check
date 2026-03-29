@@ -142,7 +142,7 @@ func (c *URLChecker) notify(ctx context.Context, url, message string) {
 				c.logger.Error("failed to send alert", "url", url, "mail_service", mailSvcName, "error", err)
 				return
 			}
-			c.logger.Info("alert sent", "url", url, "mail_service", mailSvcName)
+			c.logger.Info("alert sent", "url", url, "mail_service", mailSvcName, "to", svc.AlertRecipients())
 		}(svc)
 	}
 	wg.Wait()

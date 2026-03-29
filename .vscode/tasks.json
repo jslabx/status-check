@@ -20,6 +20,11 @@
             "label": "Run",
             "type": "shell",
             "command": "source .env; go run ./cmd/",
+            "options": {
+                "env": {
+                    "LOG_LEVEL": "DEBUG"
+                }
+            },
             "group": "none",
             "isBackground": true,
             "presentation": {

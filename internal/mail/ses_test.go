@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"slices"
 	"strings"
 	"testing"
 
@@ -35,6 +36,22 @@ func (m *mockSESClient) SendEmail(_ context.Context, input *ses.SendEmailInput, 
 		return nil, m.err
 	}
 	return &ses.SendEmailOutput{}, nil
+}
+
+func TestSesMailService_AlertRecipients(t *testing.T) {
+	mock := &mockSESClient{}
+	to := []string{"a@example.com", "b@example.com"}
+	svc := NewSesMailService(context.Background(), testDiscardLogger(), mock, "from@example.com", to)
+
+	got := svc.AlertRecipients()
+	if !slices.Equal(got, to) {
+		t.Errorf("AlertRecipients: got %v, want %v", got, to)
+	}
+	got[0] = "mutated@example.com"
+	got2 := svc.AlertRecipients()
+	if got2[0] != "a@example.com" {
+		t.Errorf("AlertRecipients must not expose internal slice: after mutating first return, second call got %q", got2[0])
+	}
 }
 
 func TestSesMailService_Send_Success(t *testing.T) {

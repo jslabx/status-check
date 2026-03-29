@@ -1,7 +1,9 @@
 package checker_test
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
@@ -27,6 +29,8 @@ type mockMailService struct {
 	mu    sync.Mutex
 	// subjects is append-only order of Send subject lines (for async ordering tests).
 	subjects []string
+	// recipients, if non-nil, is returned by AlertRecipients (copied).
+	recipients []string
 }
 
 func (m *mockMailService) Send(_ context.Context, subject, _ string) error {
@@ -35,6 +39,15 @@ func (m *mockMailService) Send(_ context.Context, subject, _ string) error {
 	m.subjects = append(m.subjects, subject)
 	m.mu.Unlock()
 	return m.err
+}
+
+func (m *mockMailService) AlertRecipients() []string {
+	if m.recipients == nil {
+		return nil
+	}
+	out := make([]string, len(m.recipients))
+	copy(out, m.recipients)
+	return out
 }
 
 // Subjects returns a copy of Send subjects in invocation order.
@@ -240,6 +253,55 @@ func TestCheck_500Alerts(t *testing.T) {
 	assertLogsEqual(t, logs, []string{"checking URL", "non-2xx response", "alert sent"})
 }
 
+func TestCheck_AlertSentLogIncludesRecipients(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	mailSvc := &mockMailService{recipients: []string{"ops@example.com", "backup@example.com"}}
+	client := &http.Client{Timeout: 5 * time.Second}
+	c := checker.New(client, []mail.MailService{mailSvc}, logger, []string{server.URL}, 0)
+	c.Check(context.Background())
+
+	type logLine struct {
+		Msg         string   `json:"msg"`
+		To          []string `json:"to"`
+		URL         string   `json:"url"`
+		MailService string   `json:"mail_service"`
+	}
+
+	var alertSent *logLine
+	for _, line := range strings.Split(strings.TrimSpace(buf.String()), "\n") {
+		if line == "" {
+			continue
+		}
+		var row logLine
+		if err := json.Unmarshal([]byte(line), &row); err != nil {
+			t.Fatalf("parse log line: %v\nline: %s", err, line)
+		}
+		if row.Msg == "alert sent" {
+			alertSent = &row
+			break
+		}
+	}
+	if alertSent == nil {
+		t.Fatalf("no alert sent log in:\n%s", buf.String())
+	}
+	want := []string{"ops@example.com", "backup@example.com"}
+	if !slices.Equal(alertSent.To, want) {
+		t.Errorf("to: got %q, want %q", alertSent.To, want)
+	}
+	if alertSent.URL != server.URL {
+		t.Errorf("url: got %q, want %q", alertSent.URL, server.URL)
+	}
+	if !strings.HasSuffix(alertSent.MailService, "mockMailService") {
+		t.Errorf("mail_service: got %q, want suffix mockMailService", alertSent.MailService)
+	}
+}
+
 func TestCheck_301Alerts(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMovedPermanently)
@@ -354,6 +416,10 @@ type funcMail struct {
 
 func (f funcMail) Send(ctx context.Context, subject, body string) error {
 	return f.sendFn(ctx, subject, body)
+}
+
+func (funcMail) AlertRecipients() []string {
+	return nil
 }
 
 func TestCheck_SlowMailServiceDoesNotBlockFasterMailService(t *testing.T) {
