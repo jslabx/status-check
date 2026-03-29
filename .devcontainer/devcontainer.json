@@ -1,0 +1,35 @@
+{
+    "name": "status-check",
+    "image": "mcr.microsoft.com/devcontainers/go:1.24-bookworm",
+
+    // Download dependencies once when the container is first created.
+    "postCreateCommand": "go mod download",
+
+    // Forward AWS credentials from the host so SES works if you have them set.
+    "containerEnv": {
+        "AWS_ACCESS_KEY_ID": "${localEnv:AWS_ACCESS_KEY_ID}",
+        "AWS_SECRET_ACCESS_KEY": "${localEnv:AWS_SECRET_ACCESS_KEY}",
+        "AWS_SESSION_TOKEN": "${localEnv:AWS_SESSION_TOKEN}",
+        "AWS_REGION": "${localEnv:AWS_REGION}"
+    },
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go"
+            ],
+            "settings": {
+                "go.useLanguageServer": true,
+                "go.toolsManagement.checkForUpdates": "local",
+                "go.formatTool": "goimports",
+                "go.lintTool": "golangci-lint",
+                "[go]": {
+                    "editor.formatOnSave": true,
+                    "editor.codeActionsOnSave": {
+                        "source.organizeImports": "explicit"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,28 @@
+# URLs to watch. Alerts fire on non-2xx responses or any transport errors.
+urls:
+  - https://example.com
+
+checker:
+  # Per-request timeout in seconds.
+  timeout_seconds: 10
+
+  # Seconds between full rounds of checks.
+  interval_seconds: 60
+
+  # Minimum seconds between repeat alerts for the same URL.
+  recheck_interval_seconds: 600
+
+mail:
+  ses:
+    # Runs in dry mode if set to false.
+    enabled: true
+
+    from: alerts@example.com
+
+    to:
+      - oncall@example.com
+      - backup@example.com
+
+    # AWS_REGION / AWS_DEFAULT_REGION takes precedence over this.
+    region: eu-west-2
+

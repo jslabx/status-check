@@ -1,0 +1,39 @@
+# Compiled binary
+/status-check
+/status-check.exe
+
+# Test artifacts
+*.test
+coverage.out
+coverage.html
+
+# Go vendor directory
+/vendor/
+
+# Go workspace files (local multi-module development)
+go.work
+go.work.sum
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Editor swap / session files
+*.swp
+*.swo
+*~
+
+# JetBrains IDEs
+.idea/
+
+# Config files
+config.yaml
