@@ -1,6 +1,6 @@
 {
     "name": "status-check",
-    "image": "mcr.microsoft.com/devcontainers/go:1.24-bookworm",
+    "image": "mcr.microsoft.com/devcontainers/go:1.25",
 
     // Download dependencies once when the container is first created.
     "postCreateCommand": "go mod download",
