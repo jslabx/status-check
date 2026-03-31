@@ -20,11 +20,14 @@ Errors and panics are recovered so that they cannot take down the entire runner.
 # Copy and edit the config
 cp config.example.yaml config.yaml
 
-# Run (uses ./config.yaml in the current directory)
-go run ./cmd/
+# Build
+go build -o status-check ./cmd/
 
-# Run  point at a specific file
-go run ./cmd/ ./config.yaml
+# Run (uses ./config.yaml in the current directory)
+./status-check
+
+# Run pointing at a specific file
+./status-check ./config.yaml
 ```
 
 ## Configuration
@@ -107,22 +110,6 @@ For SES, pass keys through the environment:
 AWS_ACCESS_KEY_ID=AKIA... \
 AWS_SECRET_ACCESS_KEY=... \
 go run ./cmd/
-```
-
-## Running with Docker
-
-```bash
-docker build -t status-check .
-
-# Run a specified config and pass relevant environment variables.
-docker run --rm \
-  -e AWS_ACCESS_KEY_ID \
-  -e AWS_SECRET_ACCESS_KEY \
-  -e AWS_SESSION_TOKEN \
-  -e AWS_REGION \
-  -e AWS_DEFAULT_REGION \
-  -v "$(pwd)/config.prod.yaml:/app/config.prod.yaml:ro" \
-  status-check /app/config.prod.yaml
 ```
 
 ## Development
